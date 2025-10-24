@@ -1,18 +1,16 @@
-// @ts-nocheck
 export default async function Home() {
   try {
-    // 调用 Cloudflare 上的 Edge API
     const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ""}/api/orders`, {
-      cache: "no-store", // 禁用缓存
+      cache: "no-store",
     });
 
-    const data = await res.json();
+    const data: OrdersResponse = await res.json(); // ✅ 指定类型
 
     if (!data.success) {
       throw new Error(data.error || "Failed to load data");
     }
 
-    const rows = data.rows as Record<string, unknown>[];
+    const rows = data.rows ?? [];
 
     return (
       <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto", fontFamily: "sans-serif" }}>
@@ -35,4 +33,15 @@ export default async function Home() {
       </div>
     );
   }
+}
+
+// --- 类型定义 ---
+interface Order {
+  [key: string]: unknown;
+}
+
+interface OrdersResponse {
+  success: boolean;
+  rows?: Order[];
+  error?: string;
 }
