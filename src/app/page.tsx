@@ -1,19 +1,17 @@
 // src/app/page.tsx（适配 Next.js 15，正确获取 D1 数据库绑定）
 
-import { runtime } from "next/headers"; // 引入 runtime 函数获取环境
 
 // 2. 页面组件（async 保留，通过 runtime() 获取 env，而非直接传参）
 export default async function Home() { 
   try {
-    // 3. 关键：通过 runtime() 拿到环境变量，获取 D1 数据库绑定
-    const env = runtime().env;
-    // 检查数据库绑定是否存在（避免无绑定导致的错误）
-    if (!env.DATABASE) {
-      throw new Error("D1 数据库未绑定，请检查 Cloudflare Pages 配置");
+   const db = process.env.DATABASE;
+    if (!db) {
+      throw new Error("D1 数据库未绑定，请检查 Cloudflare 配置（变量名：DATABASE）");
     }
 
+
     // 4. 执行数据库查询（和之前逻辑一致，用 env.DATABASE 调用）
-    const result = await env.DATABASE.prepare(
+    const result = await db.prepare(
       "SELECT * FROM table1" // 注意：替换 [table] 为你的实际表名（如 orders）
     ).run();
 
