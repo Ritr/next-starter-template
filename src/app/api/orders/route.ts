@@ -15,7 +15,7 @@ interface D1Database {
 }
 
 // ✅ 使用 `_request` 表示未使用变量，避免 ESLint 报错
-export async function GET(_request: Request) {
+export async function GET() {
   try {
     // ✅ 明确指定类型，不用 any
     const db = (globalThis as unknown as { DATABASE?: D1Database }).DATABASE;
@@ -26,7 +26,7 @@ export async function GET(_request: Request) {
 
     const result = await db.prepare("SELECT * FROM table1").run();
     const rows = result.rows ?? [];
-
+    
     return Response.json({ success: true, rows });
   } catch (error) {
     return Response.json(
