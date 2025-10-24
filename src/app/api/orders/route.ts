@@ -14,10 +14,11 @@ interface D1Database {
   prepare(query: string): D1PreparedStatement;
 }
 
-// ✅ Cloudflare Pages 环境下，D1 数据库会挂载到 globalThis
-export async function GET(request: Request) {
+// ✅ 使用 `_request` 表示未使用变量，避免 ESLint 报错
+export async function GET(_request: Request) {
   try {
-    const db = (globalThis as any).DATABASE as D1Database | undefined;
+    // ✅ 明确指定类型，不用 any
+    const db = (globalThis as unknown as { DATABASE?: D1Database }).DATABASE;
 
     if (!db) {
       throw new Error("D1 数据库未绑定（Cloudflare Pages 未设置 DATABASE）");
