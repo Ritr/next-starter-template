@@ -17,7 +17,7 @@ interface D1Database {
 }
 
 // --- Cloudflare 运行时环境全局类型声明 ---
-// Cloudflare Pages 适配器通常将 bindings 挂载到全局 Env 对象上。
+// Cloudflare Pages 适配器通常将 bindings 挂载到 Env 对象上。
 // 这里我们定义一个 Env 接口来包含我们的 D1 绑定。
 interface Env {
   DATABASE: D1Database;
@@ -25,34 +25,28 @@ interface Env {
 }
 
 /**
- * 帮助函数，用于安全地从 Cloudflare 运行时（globalThis）获取 Env 对象，
- * 兼容 globalThis.env 和直接挂载到 globalThis 两种模式。
+ * Cloudflare 注入的运行时上下文对象，包含 env 属性
  */
-function getEnv(): Env | null {
-  // 1. 尝试访问 globalThis.env (更标准的 Worker 模式)
-  const globalEnv = (globalThis as unknown as { env?: Env }).env;
-  if (globalEnv && globalEnv.DATABASE) {
-    return globalEnv;
-  }
-  
-  // 2. 尝试访问 globalThis 本身 (Next.js 适配器有时会这么做)
-  // 我们直接依赖 globalThis.DATABASE 的类型断言
-  const directAccess = (globalThis as unknown as { DATABASE?: D1Database });
-  if (directAccess.DATABASE) {
-      return { DATABASE: directAccess.DATABASE } as Env;
-  }
-  
-  return null;
+interface CloudflareContext {
+    env: Env;
+    // 其他可能的属性如 waitUntil, passThroughOnException 等
 }
 
 // ✅ 使用 `_request` 表示未使用变量，避免 ESLint 报错
-export async function GET() {
+// 修正：直接通过 App Router 的第二个参数访问 Cloudflare 注入的上下文
+export async function GET(
+    _request: Request,
+    context: CloudflareContext // 适配器注入的运行时上下文
+) {
   try {
-    const env = getEnv();
+    console.log(_request)
+    // 1. 直接从 context.env 访问 D1 绑定
+    const env = context.env;
 
     // 检查绑定是否存在
     if (!env || !env.DATABASE) {
-      throw new Error("D1 数据库未绑定。请检查 Cloudflare Pages/Workers 的 'Bindings' 设置，变量名必须是 'DATABASE'。");
+      // 抛出新的错误，帮助区分是全局访问失败还是 context 访问失败
+      throw new Error("D1 数据库未通过 Context 访问成功。请再次检查 Cloudflare Pages 的 Bindings。");
     }
 
     const db = env.DATABASE;
