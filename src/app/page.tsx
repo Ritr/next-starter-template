@@ -1,10 +1,12 @@
 // src/app/page.tsx（适配 Next.js 15，正确获取 D1 数据库绑定）
 
+import type { D1Database } from "@cloudflare/workers-types";
 
 // 2. 页面组件（async 保留，通过 runtime() 获取 env，而非直接传参）
 export default async function Home() { 
   try {
-   const db = process.env.DATABASE;
+       const db = process.env.DATABASE as D1Database | undefined;
+
     if (!db) {
       throw new Error("D1 数据库未绑定，请检查 Cloudflare 配置（变量名：DATABASE）");
     }
