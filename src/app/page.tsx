@@ -1,5 +1,4 @@
-// src/app/page.tsx
-// ✅ 普通 Node runtime 页面（不使用 edge）
+// @ts-nocheck
 export default async function Home() {
   try {
     // 调用 Cloudflare 上的 Edge API
