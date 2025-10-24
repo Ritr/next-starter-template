@@ -27,12 +27,10 @@ interface Env {
  * 尽管 Next.js App Router 官方只定义了 request 参数，Cloudflare 适配器会注入 env。
  * 这是访问 D1 数据库最可靠的方式。
  */
-export async function GET(_request: Request, env: Env) {
-  console.log(_request);
-  console.log(env);
+export async function GET() {
   try {
     // 1. 直接从注入的 'env' 参数中访问 D1 数据库实例
-    const db = env.DATABASE;
+    const db = process.env.DATABASE;
 
     // 检查绑定是否存在（虽然在 TypeScript 中 env.DATABASE 保证存在，
     // 但在运行时如果未配置，它可能为 undefined 或 null）
