@@ -1,5 +1,3 @@
-// app/page.js（注意：若使用type关键字，文件需改为.page.tsx，或移除类型定义）
-import Image from "next/image";
 
 // 移除TypeScript类型定义（若文件为.js，不支持type关键字）
 // 若要保留类型，需将文件重命名为page.tsx，并确保项目支持TypeScript
