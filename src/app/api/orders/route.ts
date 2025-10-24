@@ -13,14 +13,6 @@ interface D1PreparedStatement {
 interface D1Database {
   prepare(query: string): D1PreparedStatement;
 }
-
-// --- Cloudflare Worker Env 类型声明 ---
-// 这是 Cloudflare Worker 运行时注入的 'env' 参数类型
-interface Env {
-  DATABASE: D1Database;
-  // 如果还有其他绑定（如 KV, R2），请在此处添加
-}
-
 /**
  * 【最终修正】使用 Cloudflare Worker 标准签名。
  * 在 Cloudflare Pages/Workers 环境中，绑定（Bindings）通常作为第二个参数 'env' 注入。
