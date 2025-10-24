@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     // 1. 直接从注入的 'env' 参数中访问 D1 数据库实例
-    const db = process.env.DATABASE;
+    const db = process.env.DATABASE as unknown as D1Database;
     // 检查绑定是否存在（虽然在 TypeScript 中 env.DATABASE 保证存在，
     // 但在运行时如果未配置，它可能为 undefined 或 null）
     if (!db) {
