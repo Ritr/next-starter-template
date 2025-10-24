@@ -1,35 +1,42 @@
+// src/app/page.tsx（适配 Next.js 15，正确获取 D1 数据库绑定）
 
-// 移除TypeScript类型定义（若文件为.js，不支持type关键字）
-// 若要保留类型，需将文件重命名为page.tsx，并确保项目支持TypeScript
+import { runtime } from "next/headers"; // 引入 runtime 函数获取环境
 
-// 页面组件（直接在服务端查询数据，再渲染到页面）
-export default async function Home({ env }) { // 注意：组件要加 async，且接收 env 参数
+// 2. 页面组件（async 保留，通过 runtime() 获取 env，而非直接传参）
+export default async function Home() { 
   try {
-    // 服务端查询 D1 数据库
+    // 3. 关键：通过 runtime() 拿到环境变量，获取 D1 数据库绑定
+    const env = runtime().env;
+    // 检查数据库绑定是否存在（避免无绑定导致的错误）
+    if (!env.DATABASE) {
+      throw new Error("D1 数据库未绑定，请检查 Cloudflare Pages 配置");
+    }
+
+    // 4. 执行数据库查询（和之前逻辑一致，用 env.DATABASE 调用）
     const result = await env.DATABASE.prepare(
-      "SELECT * FROM [table]" // 注意：[table]需替换为你的实际表名，避免SQL语法错误
+      "SELECT * FROM table1" // 注意：替换 [table] 为你的实际表名（如 orders）
     ).run();
 
-    // 提取数据库返回的行数据
-    const orders = result.rows;
+    // 5. 提取数据（D1 的 run() 结果中，rows 是实际数据数组）
+    const orders = result.rows; // 类型断言，确保 TypeScript 不报错
 
-    // 直接渲染数据到页面（修复JSX闭合标签错误）
+    // 6. 渲染页面（和之前一致，修复后可正常显示）
     return (
       <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
         <h1 style={{ color: "#333" }}>Recent Orders</h1>
         
-        {/* 无数据提示 */}
         {orders.length === 0 ? (
           <p style={{ color: "#666" }}>No orders found in the database.</p>
         ) : (
-          // 修复闭合标签：将<div/>改为</div>
-          <div>{JSON.stringify(orders)}</div> 
-          // 建议用JSON.stringify()显示数组，toString()会显示[object Object]
+          <div style={{ whiteSpace: "pre-wrap" }}>
+            {/* 用 JSON.stringify 格式化显示，方便查看数据结构 */}
+            {JSON.stringify(orders, null, 2)}
+          </div>
         )}
       </div>
     );
   } catch (error) {
-    // 捕获数据库查询错误，在页面显示错误信息
+    // 捕获所有错误并显示（方便排查问题）
     return (
       <div style={{ padding: "20px", color: "#dc3545" }}>
         <h1>Error Loading Orders</h1>
