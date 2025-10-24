@@ -1,5 +1,4 @@
 // ✅ src/app/api/orders/route.ts
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 // 内联类型定义，避免依赖 @cloudflare/workers-types
