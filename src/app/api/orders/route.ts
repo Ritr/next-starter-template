@@ -17,39 +17,50 @@ interface D1Database {
 }
 
 // --- Cloudflare 运行时环境全局类型声明 ---
-// Cloudflare Pages 适配器通常将 bindings 挂载到 Env 对象上。
-// 这里我们定义一个 Env 接口来包含我们的 D1 绑定。
 interface Env {
   DATABASE: D1Database;
   // 如果还有其他绑定（如 KV, R2），请在此处添加
 }
 
 /**
- * Cloudflare 注入的运行时上下文对象，包含 env 属性
+ * 尝试通过 globalThis 访问 D1 绑定。
+ * 检查两种常见的 Cloudflare 注入模式: 
+ * 1. globalThis.DATABASE (Next.js 适配器直接注入，如 OpenNext 早期版本)
+ * 2. globalThis.env.DATABASE (标准 Cloudflare Worker 模式，更常见)
  */
-interface CloudflareContext {
-    env: Env;
-    // 其他可能的属性如 waitUntil, passThroughOnException 等
-}
-
-// ✅ 使用 `_request` 表示未使用变量，避免 ESLint 报错
-// 修正：直接通过 App Router 的第二个参数访问 Cloudflare 注入的上下文
-export async function GET(
-    _request: Request,
-    context: CloudflareContext // 适配器注入的运行时上下文
-) {
-  try {
-    console.log(_request)
-    // 1. 直接从 context.env 访问 D1 绑定
-    const env = context.env;
-
-    // 检查绑定是否存在
-    if (!env || !env.DATABASE) {
-      // 抛出新的错误，帮助区分是全局访问失败还是 context 访问失败
-      throw new Error("D1 数据库未通过 Context 访问成功。请再次检查 Cloudflare Pages 的 Bindings。");
+function getDbBinding(): D1Database | undefined {
+    
+    // 1. 尝试直接访问 globalThis.DATABASE
+    const directAccess = (globalThis as unknown as { DATABASE?: D1Database });
+    console.log(directAccess);
+    if (directAccess.DATABASE) {
+        console.log("D1 Binding found via globalThis.DATABASE");
+        return directAccess.DATABASE;
     }
 
-    const db = env.DATABASE;
+    // 2. 尝试通过 globalThis.env 访问 DATABASE
+    const envAccess = (globalThis as unknown as { env?: Env });
+    if (envAccess.env && envAccess.env.DATABASE) {
+        console.log("D1 Binding found via globalThis.env.DATABASE");
+        return envAccess.env.DATABASE;
+    }
+    
+    console.warn("D1 Binding not found in either globalThis.DATABASE or globalThis.env.DATABASE.");
+    return undefined;
+}
+
+
+// ✅ 恢复为 Next.js App Router 的标准 GET 函数签名
+export async function GET() {
+  try {
+    // 1. 尝试获取 D1 数据库实例
+    const db = getDbBinding();
+
+    // 检查绑定是否存在
+    if (!db) {
+      // 抛出新的错误，明确指出是通过 globalThis 访问失败
+      throw new Error("D1 数据库未找到。请确认 Cloudflare Pages Bindings 的变量名精确为 'DATABASE'，并确保项目已启用 Edge/Serverless Functions。");
+    }
 
     // 建议使用 all() 来获取查询结果
     // 注意：请将 'table1' 替换为您实际的表名
